@@ -9,8 +9,14 @@ class IntentClassification(BaseModel):
     intent: str = Field(description="Exactly 'greeting' or 'search', indicating if the user query is just saying hello/greeting, or actually searching/asking a question.")
 
 def intent_detector(state: state):
-    query = state["query"]
+    query = state["query"].strip().lower()
     
+    # Heuristic check for common greetings (instant)
+    common_greetings = {"hi", "hello", "hey", "good morning", "good afternoon", "good evening", "how are you", "who are you"}
+    if any(greet in query for greet in common_greetings) and len(query) < 20: # Limit length to ensure it's a simple greeting
+        print("Heuristic greeting check triggered (Fast Path)!")
+        return {"query_evaluator": "greeting"}
+
     try:
         # Prefer Groq for fast classification, fallback to Ollama
         api_key = os.getenv("GROQ_API_KEY")

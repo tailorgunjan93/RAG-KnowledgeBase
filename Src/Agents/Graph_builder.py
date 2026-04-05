@@ -29,6 +29,9 @@ def intent_decider(state: state):
 def retrieve_eval_decider(state: state):
     return state["query_evaluator"]
 
+def chatbot_decider(state: state):
+    return "END" if state.get("query_evaluator") == "greeting" else "result_evaluator"
+
 def result_eval_decide(state: state):
     return "END" if state.get("response_checker") == "yes" else "query_correction"
 
@@ -53,7 +56,14 @@ graph_workflow.add_conditional_edges(
     }
 )
 graph_workflow.add_edge("web_search","result_evaluator")
-graph_workflow.add_edge("chat_bot","result_evaluator")
+graph_workflow.add_conditional_edges(
+    "chat_bot",
+    chatbot_decider,
+    {
+        "END": END,
+        "result_evaluator": "result_evaluator"
+    }
+)
 graph_workflow.add_conditional_edges(
     "result_evaluator",
     result_eval_decide,

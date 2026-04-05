@@ -1,6 +1,6 @@
 from fastapi import APIRouter,HTTPException
 from Src.Evaluaters.QueryGrader import QueryGrader
-from VectoreStore.faiss_search import search_faiss_index_with_score
+from VectoreStore.faiss_search import search_dynamic_faiss_index_with_score
 
 GradeRouter = APIRouter()
 
@@ -8,7 +8,7 @@ GradeRouter = APIRouter()
 @GradeRouter.get("/Grade")
 async def GradeChecker(query: str):
     try:
-        docs = search_faiss_index_with_score(query)
+        docs = search_dynamic_faiss_index_with_score(query)
     except Exception as e:
         raise HTTPException(
             status_code=503,
