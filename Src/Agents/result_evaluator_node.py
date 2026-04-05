@@ -1,9 +1,9 @@
 from Src.Evaluaters.Hellucination_Grader import result_evaluater
 
-from .Agent_state import state
+from .Agent_state import AgentState
 
 
-def result_evaluator(state: state):
+def result_evaluator(state: AgentState):
     response = state["response"]
     query = state["query"]
     intent = state.get("query_evaluator", "search")

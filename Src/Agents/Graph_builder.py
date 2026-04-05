@@ -1,7 +1,7 @@
 from langgraph.graph import START, END, StateGraph
 from langgraph.checkpoint.memory import MemorySaver
 
-from .Agent_state import state
+from .Agent_state import AgentState
 from .chat_bot_node import chat_bot
 from .query_corrector_node import query_correction
 from .query_evaluation_node import query_evaluation
@@ -11,7 +11,7 @@ from .web_search_node import web_search
 from .intent_detector_node import intent_detector
 
 #adding graph workflow 
-graph_workflow = StateGraph(state)
+graph_workflow = StateGraph(AgentState)
 
 #Adding nodes in langgraph
 graph_workflow.add_node("intent_detector", intent_detector)
@@ -22,17 +22,17 @@ graph_workflow.add_node("query_correction",query_correction)
 graph_workflow.add_node("result_evaluator",result_evaluator)
 graph_workflow.add_node("query_evaluation",query_evaluation)
 
-def intent_decider(state: state):
+def intent_decider(state: AgentState):
     # if greeting, go to chatbot directly bypassing retrieval
     return "chat_bot" if state.get("query_evaluator") == "greeting" else "retriever"
 
-def retrieve_eval_decider(state: state):
+def retrieve_eval_decider(state: AgentState):
     return state["query_evaluator"]
 
-def chatbot_decider(state: state):
+def chatbot_decider(state: AgentState):
     return "END" if state.get("query_evaluator") == "greeting" else "result_evaluator"
 
-def result_eval_decide(state: state):
+def result_eval_decide(state: AgentState):
     return "END" if state.get("response_checker") == "yes" else "query_correction"
 
 #adding edges
@@ -74,5 +74,13 @@ graph_workflow.add_conditional_edges(
 )
 graph_workflow.add_edge("query_correction","retriever")
 
+from langgraph.checkpoint.memory import MemorySaver
+# from langgraph.checkpoint.sqlite import SqliteSaver
+# import sqlite3
+
+# ... nodes and edges ...
+
+# conn = sqlite3.connect("memory.db", check_same_thread=False)
+# memory = SqliteSaver(conn) 
 memory = MemorySaver()
 app = graph_workflow.compile(checkpointer=memory)

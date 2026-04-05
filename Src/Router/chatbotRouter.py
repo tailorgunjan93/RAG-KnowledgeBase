@@ -12,12 +12,6 @@ async def chat_bot(query: str, thread_id: str = "default_user_1"):
     final_state = app.invoke(
         {
             "query": query,
-            "query_evaluator": "",
-            "query_grader": "",
-            "response_checker": "",
-            "messages": [], # Must provide list, not string since we use Annotated with add_messages
-            "response": "",
-            "document": [],
         },
         config=config
     )

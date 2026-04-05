@@ -1,9 +1,8 @@
 from VectoreStore.faiss_search import search_dynamic_faiss_index_with_score, search_neo4j_graph
-from .Agent_state import state
-import asyncio
-from concurrent.futures import ThreadPoolExecutor
+from .Agent_state import AgentState
 
-def retriever(state: state):
+
+def retriever(state: AgentState):
     query = state["query"]
     
     # We do a sequential or parallel execution to get both Graph and Vector results.

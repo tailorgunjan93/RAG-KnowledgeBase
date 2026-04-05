@@ -23,12 +23,8 @@ def select_best_index(query: str):
     if len(indexes) == 1:
         return indexes[0]
         
-    api_key = os.getenv("GROQ_API_KEY")
-    if not api_key or api_key == "your_groq_api_key_here":
-        from langchain_ollama import ChatOllama
-        llm = ChatOllama(model="llama3.2")
-    else:
-        llm = ChatGroq(model="llama3-8b-8192", api_key=api_key)
+    from Src.Utils.llm_utils import get_llm
+    llm = get_llm(performance="standard")
         
     structured_llm = llm.with_structured_output(RouteDecision)
     system = "You are an index routing assistant. Choose the best matching document index to answer the user query. Available indexes: {indexes}"
@@ -40,8 +36,8 @@ def select_best_index(query: str):
         decision = (prompt | structured_llm).invoke({"query": query, "indexes": ", ".join(indexes)})
         if decision and decision.index_name in indexes:
             return decision.index_name
-    except:
-        pass
+    except Exception as e:
+        print(f"Error in select_best_index: {e}")
     
     return indexes[0] # fallback
 
@@ -53,7 +49,9 @@ def search_dynamic_faiss_index_with_score(query: str, k: int = 4):
     target_path = base_vectorStore_path / best_index
     try:
         index = embeddings.load_faiss_index(str(target_path), embeddings.embedding)
-        return index.similarity_search_with_score(query, k=k)
+        results = index.similarity_search_with_score(query, k=k)
+        # Fix LangGraph serialization issue by converting numpy.float32 scores to Python floats
+        return [(doc, float(score)) for doc, score in results]
     except Exception as e:
         print(f"Error loading faiss index {best_index}: {e}")
         return []
@@ -61,16 +59,15 @@ def search_dynamic_faiss_index_with_score(query: str, k: int = 4):
 def search_neo4j_graph(query: str):
     try:
         from langchain_neo4j import Neo4jGraph, GraphCypherQAChain
-        api_key = os.getenv("GROQ_API_KEY")
-        if not api_key or api_key == "your_groq_api_key_here":
-            from langchain_ollama import ChatOllama
-            llm = ChatOllama(model="llama3.2")
-        else:
-            model_name = os.getenv("GROQ_MODEL_NAME", "llama3-8b-8192")
-            llm = ChatGroq(model=model_name, api_key=api_key)
+        from Src.Utils.llm_utils import get_llm, setup_neo4j
+        
+        # Centralized setup for Neo4j credentials
+        setup_neo4j()
+        
+        llm = get_llm(performance="standard")
             
         graph = Neo4jGraph()
-        chain = GraphCypherQAChain.from_llm(graph=graph, llm=llm, verbose=True, return_direct=True)
+        chain = GraphCypherQAChain.from_llm(graph=graph, llm=llm, verbose=True, return_direct=True, allow_dangerous_requests=True)
         result = chain.invoke({"query": query})
         
         from langchain_core.documents import Document

@@ -24,23 +24,38 @@ async def embed_file(file_path: str):
         from langchain_experimental.graph_transformers import LLMGraphTransformer
         from langchain_neo4j import Neo4jGraph
         
-        api_key = os.getenv("GROQ_API_KEY")
-        if not api_key or api_key == "your_groq_api_key_here":
-            from langchain_ollama import ChatOllama
-            llm = ChatOllama(model="llama3.2")
-        else:
-            from langchain_groq import ChatGroq
-            model_name = os.getenv("GROQ_MODEL_NAME", "llama3-8b-8192")
-            llm = ChatGroq(model=model_name, api_key=api_key)
-            
-        llm_transformer = LLMGraphTransformer(llm=llm)
-        graph_documents = llm_transformer.convert_to_graph_documents(docs)
+        from Src.Utils.llm_utils import get_llm, setup_neo4j
         
-        graph = Neo4jGraph() # Reads from NEO4J_URI environment variables automatically
-        graph.add_graph_documents(graph_documents, baseEntityLabel=True, include_source=True)
-        print(f"Added graph docs to Neo4j for {file_stem}")
+        # Centralized setup for Neo4j credentials
+        setup_neo4j()
+        
+        print(f"--- Starting Graph Extraction for {file_stem} ---")
+        
+        from Src.Utils.llm_utils import get_llm
+        # Using a high-performance LLM for accurate graph document extraction
+        llm = get_llm(performance="high")
+        
+        print(f"Using LLM for Extraction: {llm.model_name if hasattr(llm, 'model_name') else 'Ollama'}")
+        llm_transformer = LLMGraphTransformer(llm=llm)
+        
+        print("Converting documents to graph documents (this can take some time)...")
+        graph_documents = llm_transformer.convert_to_graph_documents(docs)
+        print(f"Extracted {len(graph_documents)} graph documents.")
+        
+        if len(graph_documents) > 0:
+            print(f"Connecting to Neo4j at {os.environ['NEO4J_URI']}...")
+            graph = Neo4jGraph() # Will now read from os.environ
+            
+            print("Writing to Neo4j...")
+            graph.add_graph_documents(graph_documents, baseEntityLabel=True, include_source=True)
+            print(f"✅ SUCCESS: Added graph documents to Neo4j for {file_stem}")
+        else:
+            print("⚠️ WARNING: No graph documents were extracted from this file.")
+        
     except Exception as e:
-        print(f"Skipped Neo4j graph generation: {e}")
+        import traceback
+        print(f"❌ FAILED Neo4j graph generation: {e}")
+        traceback.print_exc()
 
     return faiss_index
 
