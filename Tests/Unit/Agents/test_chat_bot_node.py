@@ -1,3 +1,9 @@
+import os
+import sys
+
+# Support direct execution of this script by adding project root to paths
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..")))
+
 import pytest
 from unittest.mock import MagicMock, patch
 from langchain_core.messages import AIMessage

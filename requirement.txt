@@ -1,17 +1,26 @@
-langchain
-uvicorn[standard]
+# --- Web and APIs ---
 fastapi
+uvicorn[standard]
 python-multipart
+python-dotenv
+pydantic
+pydantic-settings
+
+# --- LangChain Core & Flows ---
+langchain
 langchain-community
 langchain-core
-langchain-neo4j
-langchain-groq
 langchain-experimental
+langgraph
+langgraph-checkpoint-sqlite
+
+# --- LLM Providers ---
+langchain-groq
+langchain-neo4j
 langchain-huggingface
 langchain-ollama
-langgraph
-pypdf
-pymupdf
+
+# --- Search & Retrieval ---
 faiss-cpu
 huggingface-hub
 transformers
@@ -19,8 +28,16 @@ sentence-transformers
 wikipedia
 beautifulsoup4
 duckduckgo-search
-python-dotenv
+
+# --- Database & Storage ---
 neo4j
-pydantic
-pydantic-settings
 sqlite-utils
+
+# --- Documents ---
+pypdf
+pymupdf
+
+# --- Testing & Quality ---
+pytest
+pytest-asyncio
+langsmith
