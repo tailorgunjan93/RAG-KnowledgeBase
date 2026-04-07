@@ -17,18 +17,16 @@ def chat_bot(state: AgentState):
     if intent == "greeting":
         prompt = ChatPromptTemplate.from_messages([
             ("system", "Respond warmly and briefly as an AI assistant. Stay conversational and friendly!"),
-            MessagesPlaceholder(variable_name="history"),
-            ("human", "{query}")
+            MessagesPlaceholder(variable_name="history")
         ])
     else:
         prompt = ChatPromptTemplate.from_messages([
             ("system", f"You are a helpful assistant. Use the following context to answer the user's question.\n\nContext:\n{docs}"),
-            MessagesPlaceholder(variable_name="history"),
-            ("human", "{query}")
+            MessagesPlaceholder(variable_name="history")
         ])
         
     chain = prompt | llm
-    response = chain.invoke({"history": history, "query": query})
+    response = chain.invoke({"history": history})
     
     return {
         "response": response.content,

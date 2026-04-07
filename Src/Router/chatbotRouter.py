@@ -1,19 +1,25 @@
-from Src.Agents.Graph_builder import app
-from fastapi import APIRouter
+"""
+chatbotRouter — Thin HTTP adapter for conversational queries.
 
-chatbot_router = APIRouter()
+Delegates all business logic to ChatService via the DI container.
+"""
+from fastapi import APIRouter, HTTPException
+
+from Src.container import chat_service
+
+chatbot_router = APIRouter(tags=["Chat"])
+
 
 @chatbot_router.get("/chat")
 async def chat_bot(query: str, thread_id: str = "default_user_1"):
-    # LangGraph expects the full state dict
-    # the checkpointer requires a config with thread_id
-    config = {"configurable": {"thread_id": thread_id}}
-    
-    final_state = app.invoke(
-        {
-            "query": query,
-        },
-        config=config
-    )
-    # Nodes store the model answer in state["response"] as a string.
-    return {"answer": final_state.get("response", "")}
+    """
+    Submit a query to the RAG agent and get a response.
+
+    The thread_id enables persistent conversation memory across requests.
+    Use a consistent thread_id per user/session to maintain context.
+    """
+    try:
+        answer = chat_service.invoke(query=query, thread_id=thread_id)
+        return {"answer": answer}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Chat failed: {exc}")

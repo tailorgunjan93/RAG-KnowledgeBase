@@ -1,5 +1,7 @@
 from langgraph.graph import START, END, StateGraph
-from langgraph.checkpoint.memory import MemorySaver
+from langgraph.checkpoint.sqlite import SqliteSaver
+import sqlite3
+
 
 from .Agent_state import AgentState
 from .chat_bot_node import chat_bot
@@ -74,13 +76,7 @@ graph_workflow.add_conditional_edges(
 )
 graph_workflow.add_edge("query_correction","retriever")
 
-from langgraph.checkpoint.memory import MemorySaver
-# from langgraph.checkpoint.sqlite import SqliteSaver
-# import sqlite3
-
-# ... nodes and edges ...
-
-# conn = sqlite3.connect("memory.db", check_same_thread=False)
-# memory = SqliteSaver(conn) 
-memory = MemorySaver()
+conn = sqlite3.connect("memory.db", check_same_thread=False)
+memory = SqliteSaver(conn) 
 app = graph_workflow.compile(checkpointer=memory)
+
